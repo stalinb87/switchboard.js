@@ -36,34 +36,45 @@ function IPC(namespace, token) {
     //a flag to know if as provider i am already register
     this.isRegister = false;
 
-
+    //when i am a provider, the list of method that i provide
+    //should be a key method object ex: {call: function(param1, param2...){}};
+    this.methods = [];
 
     this.pubSub = new(require('./PubSub'))();
 
     //handle all message receive 
     this.pubSub.on('message', function (channel, response) {
+        var toResponse = response;
         switch (response.action) {
         case 'response':
             {
                 //basicly if is not still register and is trying to do it
-                if (self.isRegister === false && channel === self.namespace) {
-                    //unsuscribe from the temporal  namespace and subscribe for the new
+                if (!self.isRegister && channel === self.namespace) {
+                    //subscribe to the new namespace the namespace with the unique value                    
                     self.channel = response.to;
                     self.pubSub.subscribe(response.to);
                     self.isRegister = true;
+                } else {
+                    //llamada a un request
                 }
                 break;
             }
         case 'consume':
             {
-
+                //here the server send a consume request, is neccesary that 
+                //the provider response with the method construction of the request methods
+                //get the namespace to consume
                 var key = Object.keys(response.consume)[0];
                 if (key) {
+                    //get the methods that require the consumer
                     var methods = response.consume[key];
+
+                    //this should be temporal after rilke build the 
+                    //method description
                     response.methods = [];
                     response.to = response.from;
                     response.from = self.channel;
-                    response.action = 'provide';
+                    response.action = 'provides';
                     delete response.consume;
                     delete response.token;
                     methods.forEach(function (method) {
@@ -72,13 +83,14 @@ function IPC(namespace, token) {
                             params: ['cid']
                         });
                     });
+                    //response with the method construction
                     self.pubSub.publish(response.to, response);
                 }
-                // console.log(response);
+
             }
-        case 'provide':
+        case 'provides':
             {
-                //@todo build the object
+                //@todo build the object and modify toResponse to be the resolve value
                 console.log(response);
             }
 
@@ -88,16 +100,20 @@ function IPC(namespace, token) {
         if (self.promises[response.uid]) {
             console.log('promise found');
             clearInterval(self.promises[response.uid].interval);
+            //if is registering don't resolve the promise resolve it when 
+            //subscribe successfully to the new channel, save the value to a variable for 
+            //send the response  when promise is resolve on the on subscribe event
             if (response.action === 'response') {
                 registrationResponse = response;
             } else {
-                self.promises[response.uid].promise.resolve(response);
+                self.promises[response.uid].promise.resolve(toResponse);
             }
         }
     });
 
     this.pubSub.on('subscribe', function (channel) {
-
+        //is subscribing to the new channel, there is a registration response y there is a promise
+        //now, can resolve the promise and unsubscribe from the temporal channel
         if (channel === self.channel && registrationResponse && self.promises[registrationResponse.uid]) {
             self.promises[registrationResponse.uid].promise.resolve(registrationResponse);
             delete self.promises[registrationResponse.uid];
@@ -115,87 +131,113 @@ var getUniqueNumber = function () {
 };
 
 /**
- * Make a call to a specific worker, handle all the attemps and timeout process
- * @param  {Object} request a request object according to the specification of the IPC
- * @param  {Promise} defer   A defered promise
- * @param  {Object} options an list of option that override the default maxAttemps and timeout
+ * As a provider, add a method(or methods) to the list of methods that i provide
+ * @param {String or Object} key   A string that define the method name, or an object with a key as the method name and the value as the method
+ * @param {function} value (optional) if the key is a string, this should be the method
  */
 
-IPC.prototype.makeCall = function (request, defer, options) {
-    var promises = this.promises;
+IPC.prototype.add = function (key, value) {
     var self = this;
-    //if this method was call and the promise exist is because the timeout was expired, and is making the call again 
-
-    //set the default options or the global one
-    options = options || {};
-    this.maxAttemps = options.maxAttemps || maxAttemps;
-    this.timeout = options.timeout || timeout;
-
-    //the promise exist
-    //found the current promise and has reached the max attemp, reject it
-    if (promises[request.uid] && promises[request.uid].attemp > this.maxAttemps) {
-        clearInterval(promises[request.uid].interval);
-        promises[request.uid].promise.reject(new Error('The worker is not availabel, timeout'));
-        delete promises[request.uid];
-        return;
-    }
-    //the promise exist, but is not reached the max attemp yet
-    if (promises[request.uid]) {
-        promises[request.uid].promise.notify(promises[request.uid].attemp);
-        promises[request.uid].attemp++;
+    if (Object.prototype.toString.call(key) === '[object Object]') {
+        Object.keys(key).forEach(function (property) {
+            if (Object.prototype.toString.call(key[property]) === '[object Function]') {
+                var method = {};
+                method[property] = key[property];
+                self.methods.push(method);
+            }
+        });
     } else {
-        // promise not exist create it
-        promises[request.uid] = {
-            promise: defer,
-            interval: setInterval(function () {
-                //every time this method will be called again with the same options
-                self.makeCall(request, defer, options);
-            }, this.timeout),
-            //the current attemp is 1 will be incrementing according
-            attemp: 1
+        // is a string
+        if (Object.prototype.toString.call(value) === '[object Function]') {
+            var method = {};
+            method[key] = value;
+            this.methods.push(method);
+        } else {
+            throw new Error('The value is not a function');
+        }
+    };
+    /**
+     * Make a call to a specific worker, handle all the attemps and timeout process
+     * @param  {Object} request a request object according to the specification of the IPC
+     * @param  {Promise} defer   A defered promise
+     * @param  {Object} options an list of option that override the default maxAttemps and timeout
+     */
+
+    IPC.prototype.makeCall = function (request, defer, options) {
+        var promises = this.promises;
+        var self = this;
+        //if this method was call and the promise exist is because the timeout was expired, and is making the call again 
+
+        //set the default options or the global one
+        options = options || {};
+        this.maxAttemps = options.maxAttemps || maxAttemps;
+        this.timeout = options.timeout || timeout;
+
+        //the promise exist
+        //found the current promise and has reached the max attemp, reject it
+        if (promises[request.uid] && promises[request.uid].attemp > this.maxAttemps) {
+            clearInterval(promises[request.uid].interval);
+            promises[request.uid].promise.reject(new Error('The worker is not availabel, timeout'));
+            delete promises[request.uid];
+            return;
+        }
+        //the promise exist, but is not reached the max attemp yet
+        if (promises[request.uid]) {
+            promises[request.uid].promise.notify(promises[request.uid].attemp);
+            promises[request.uid].attemp++;
+        } else {
+            // promise not exist create it
+            promises[request.uid] = {
+                promise: defer,
+                interval: setInterval(function () {
+                    //every time this method will be called again with the same options
+                    self.makeCall(request, defer, options);
+                }, this.timeout),
+                //the current attemp is 1 will be incrementing according
+                attemp: 1
+            };
+        }
+        //make the call to the worker
+        this.pubSub.publish(request.to, request);
+    };
+    /**
+     * Allow a worker to register as a provider
+     * @return {Promise} a promise that will be resolve when the server response correctly or reject if some error
+     */
+    IPC.prototype.register = function () {
+        //subscribe temporaly to this namespace	
+        this.pubSub.subscribe(this.namespace);
+
+        var defer = Q.defer();
+        var uid = getUniqueNumber();
+        var request = {
+            action: 'register',
+            token: this.token,
+            from: this.namespace,
+            to: ipcNamespace,
+            uid: uid
         };
-    }
-    //make the call to the worker
-    this.pubSub.publish(request.to, request);
-};
-/**
- * Allow a worker to register as a provider
- * @return {Promise} a promise that will be resolve when the server response correctly or reject if some error
- */
-IPC.prototype.register = function () {
-    //subscribe temporaly to this namespace	
-    this.pubSub.subscribe(this.namespace);
+        this.makeCall(request, defer);
 
-    var defer = Q.defer();
-    var uid = getUniqueNumber();
-    var request = {
-        action: 'register',
-        token: this.token,
-        from: this.namespace,
-        to: ipcNamespace,
-        uid: uid
+        return defer.promise;
     };
-    this.makeCall(request, defer);
 
-    return defer.promise;
-};
-
-IPC.prototype.consume = function (namespace, methods) {
-    this.pubSub.subscribe(this.namespace);
-    var self = this;
-    var defer = Q.defer();
-    var uid = getUniqueNumber();
-    var consume = {};
-    consume[namespace] = methods;
-    var request = {
-        action: 'consume',
-        token: this.token,
-        from: this.namespace,
-        to: ipcNamespace,
-        uid: uid,
-        consume: consume
+    IPC.prototype.consume = function (namespace, methods) {
+        this.pubSub.subscribe(this.namespace);
+        var self = this;
+        var defer = Q.defer();
+        var uid = getUniqueNumber();
+        var consume = {};
+        consume[namespace] = methods;
+        var request = {
+            action: 'consume',
+            token: this.token,
+            from: this.namespace,
+            to: ipcNamespace,
+            uid: uid,
+            consume: consume
+        };
+        this.makeCall(request, defer);
+        return defer.promise;
     };
-    this.makeCall(request, defer);
-    return defer.promise;
-};
-module.exports = IPC;
+    module.exports = IPC;
