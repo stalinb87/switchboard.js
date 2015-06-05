@@ -2,6 +2,7 @@
 var pubSub = new(require('./PubSub'))();
 var ipcNamespace = 'com.starvox.core.ipc';
 var redis = require('redis');
+var uuid = require('uuid');
 var client;
 
 function Server() {
@@ -10,9 +11,6 @@ function Server() {
     console.log('IPC Server started and subscribe to %s', ipcNamespace);
 }
 
-var getUniqueNumber = function () {
-    return new Date().getUTCMilliseconds() * (Math.random() * 1000);
-};
 var validate = function (request) {
     return {
         namespace: request.token
@@ -29,7 +27,7 @@ var register = function (request, data, callback) {
             callback(null, JSON.parse(value));
         } else {
             var data = {
-                uid: getUniqueNumber(),
+                uid: uuid.v4(),
                 lastRegister: Date.now()
             };
             client.set(namespace, JSON.stringify(data), function (err) {

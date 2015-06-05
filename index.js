@@ -1,7 +1,12 @@
 //the pubsub driver
 var pubSub = require('./PubSub');
+
+var remoteCall = require('./RemoteCall');
+
 //a promise baby!!!
 var Q = require('q');
+
+var uuid = require('uuid');
 
 //the server namespace
 var ipcNamespace = 'com.starvox.core.ipc';
@@ -11,7 +16,6 @@ var maxAttemps = 3;
 
 //default timeout for message between process
 var timeout = 5000;
-
 
 
 /**
@@ -38,109 +42,122 @@ function IPC(namespace, token) {
 
     //when i am a provider, the list of method that i provide
     //should be a key method object ex: {call: function(param1, param2...){}};
-    this.methods = [];
+    this.methods = {};
 
     this.pubSub = new(require('./PubSub'))();
 
     //handle all message received
     this.pubSub.on('message', function (channel, response) {
         var toResponse = response;
-        switch (response.action) {
-        case 'response':
-            {
-                //basicly if is not still register and is trying to do it
-                if (!self.isRegister && channel === self.namespace) {
-                    //subscribe to the new namespace the namespace with the unique value
-                    self.channel = response.to;
-                    self.pubSub.subscribe(response.to);
-                    self.isRegister = true;
-                } else {
-                    //llamada a un request
+        try {
+            switch (response.action) {
+            case 'request':
+                {
+                    return remoteCall.provider(self, response);
+                    break;
                 }
-                break;
-            }
-        case 'consume':
-            {
-                //here the server send a consume request, is neccesary that
-                //the provider response with the method construction of the request methods
-                //get the namespace to consume
-                var key = Object.keys(response.consume)[0];
-                if (key) {
-                    //get the methods that require the consumer
-                    var methods = response.consume[key];
+            case 'response':
+                {
+                    //basicly if is not still register and is trying to do it
+                    if (!self.isRegister && channel === self.namespace) {
+                        //subscribe to the new namespace the namespace with the unique value
+                        self.channel = response.to;
+                        self.pubSub.subscribe(response.to);
+                        self.isRegister = true;
+                    } else {
+                        //llamada a un request
+                    }
+                    break;
+                }
+            case 'consume':
+                {
+                    //here the server send a consume request, is neccesary that
+                    //the provider response with the method construction of the request methods
+                    //get the namespace to consume
+                    var key = Object.keys(response.consume)[0];
+                    if (key) {
+                        //get the methods that require the consumer
+                        var methods = response.consume[key];
 
-                    //this should be temporal after rilke build the
-                    //method description
-                    response.methods = [];
-                    response.to = response.from;
-                    response.from = self.channel;
-                    response.action = 'provides';
-                    delete response.consume;
-                    delete response.token;
-                    for (var method in methods) {
-                        method = methods[method];
+                        //this should be temporal after Rilke builds the
+                        //method description
+                        response.methods = [];
+                        response.to = response.from;
+                        response.from = self.channel;
+                        response.action = 'provides';
+                        delete response.consume;
+                        delete response.token;
 
-                        // Validate this method exists
-                        if (!this.methods[method]) {
-                            response.error = {
-                                code: 'XXXX-1',
-                                message: 'Unknown method called: ' + method
-                            };
-                            break;
+                        for (var method in methods) {
+                            method = methods[method];
+
+                            // Validate this method exists
+                            if (!self.methods[method]) {
+                                response.error = {
+                                    code: 'XXXX-1',
+                                    message: 'Unknown method called: ' + method
+                                };
+                                break;
+                            }
+
+                            // Extract parameters
+                            var params = remoteCall.getParameters(self.methods[method]);
+
+                            response.methods.push({
+                                method: method,
+                                params: params
+                            });
                         }
 
-                        // var params = this; // work in progress
-
-                        response.methods.push({
-                            method: method,
-                            params: params
-                        });
-                    };
-                    //response with the method construction
-                    self.pubSub.publish(response.to, response);
+                        //response with the method construction
+                        self.pubSub.publish(response.to, response);
+                    }
+                    break;
                 }
 
-            }
-        case 'provides':
-            {
-                //@todo build the object and modify toResponse to be the resolve value
-                console.log('\x1b[1;35m', response, '\x1b[0m');
+            case 'provides':
+                {
+                    //@todo build the object and modify toResponse to be the resolve value
+                    // console.log('\x1b[1;35m', channel, response, '\x1b[0m');
+                    toResponse = remoteCall.consumer(self, response);
+                    break;
+                }
             }
 
-        }
+            //If there is a promise for this message remove the interval for not calling again, resolve the promise  and remove it
+            if (self.promises[response.uid]) {
+                clearInterval(self.promises[response.uid].interval);
+                //if is registering don't resolve the promise resolve it when
+                //subscribe successfully to the new channel, save the value to a variable for
+                //send the response  when promise is resolve on the on subscribe event
 
-        //If there is a promise for this message remove the interval for not calling again, resolve the promise  and remove it
-        if (self.promises[response.uid]) {
-            console.log('promise found');
-            clearInterval(self.promises[response.uid].interval);
-            //if is registering don't resolve the promise resolve it when
-            //subscribe successfully to the new channel, save the value to a variable for
-            //send the response  when promise is resolve on the on subscribe event
-            if (response.action === 'response') {
-                registrationResponse = response;
-            } else {
-                self.promises[response.uid].promise.resolve(toResponse);
+                if (response.action === 'response' && response.from === ipcNamespace) {
+                    registrationResponse = response;
+                } else {
+                    console.log('\x1b[1;41;37m%j\x1b[0m', response);
+                    self.promises[response.uid].promise.resolve(response);
+                }
             }
+        } catch (err) {
+            console.error('PubSub onMessage error.');
+            console.error(err.stack);
         }
     });
 
     this.pubSub.on('subscribe', function (channel) {
         //is subscribing to the new channel, there is a registration response y there is a promise
         //now, can resolve the promise and unsubscribe from the temporal channel
-        if (channel === self.channel && registrationResponse && self.promises[registrationResponse.uid]) {
-            self.promises[registrationResponse.uid].promise.resolve(registrationResponse);
-            delete self.promises[registrationResponse.uid];
-            self.pubSub.unsubscribe(self.namespace);
+        try {
+            if (channel === self.channel && registrationResponse && self.promises[registrationResponse.uid]) {
+                self.promises[registrationResponse.uid].promise.resolve(registrationResponse);
+                delete self.promises[registrationResponse.uid];
+                // self.pubSub.unsubscribe(self.namespace);
+            }
+        } catch (err) {
+            console.error('PubSub subscribe error.');
+            console.error(err.stack);
         }
     });
-};
-
-/**
- * Generate a random unique number
- * @return {int} The random unique number
- */
-var getUniqueNumber = function () {
-    return new Date().getUTCMilliseconds() * (Math.random() * 1000);
 };
 
 /**
@@ -148,25 +165,20 @@ var getUniqueNumber = function () {
  * @param {String or Object} key   A string that define the method name, or an object with a key as the method name and the value as the method
  * @param {function} value (optional) if the key is a string, this should be the method
  */
-
 IPC.prototype.add = function (key, value) {
     var self = this;
     if (Object.prototype.toString.call(key) === '[object Object]') {
         Object.keys(key).forEach(function (property) {
             if (Object.prototype.toString.call(key[property]) === '[object Function]') {
-                var method = {};
-                method[property] = key[property];
-                self.methods.push(method);
+                self.methods[property] = key[property];
             }
         });
     } else {
         // is a string
         if (Object.prototype.toString.call(value) === '[object Function]') {
-            var method = {};
-            method[key] = value;
-            this.methods.push(method);
+            self.methods[key] = value;
         } else {
-            throw new Error('The value is not a function');
+            throw new Error('Unknown function name: ' + value);
         }
     }
 };
@@ -177,7 +189,6 @@ IPC.prototype.add = function (key, value) {
  * @param  {Promise} defer   A defered promise
  * @param  {Object} options an list of option that override the default maxAttemps and timeout
  */
-
 IPC.prototype.makeCall = function (request, defer, options) {
     var promises = this.promises;
     var self = this;
@@ -192,7 +203,7 @@ IPC.prototype.makeCall = function (request, defer, options) {
     //found the current promise and has reached the max attemp, reject it
     if (promises[request.uid] && promises[request.uid].attemp > this.maxAttemps) {
         clearInterval(promises[request.uid].interval);
-        promises[request.uid].promise.reject(new Error('The worker is not availabel, timeout'));
+        promises[request.uid].promise.reject(new Error('The worker is not available, timeout'));
         delete promises[request.uid];
         return;
     }
@@ -215,6 +226,7 @@ IPC.prototype.makeCall = function (request, defer, options) {
     //make the call to the worker
     this.pubSub.publish(request.to, request);
 };
+
 /**
  * Allow a worker to register as a provider
  * @return {Promise} a promise that will be resolve when the server response correctly or reject if some error
@@ -224,7 +236,7 @@ IPC.prototype.register = function () {
     this.pubSub.subscribe(this.namespace);
 
     var defer = Q.defer();
-    var uid = getUniqueNumber();
+    var uid = uuid.v4();
     var request = {
         action: 'register',
         token: this.token,
@@ -241,7 +253,7 @@ IPC.prototype.consume = function (namespace, methods) {
     this.pubSub.subscribe(this.namespace);
     var self = this;
     var defer = Q.defer();
-    var uid = getUniqueNumber();
+    var uid = uuid.v4();
     var consume = {};
     consume[namespace] = methods;
     var request = {
@@ -255,4 +267,5 @@ IPC.prototype.consume = function (namespace, methods) {
     this.makeCall(request, defer);
     return defer.promise;
 };
+
 module.exports = IPC;

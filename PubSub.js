@@ -14,14 +14,25 @@ var PubSub = function () {
     this.sub.on('message', function (channel, message) {
         self.emit('message', channel, JSON.parse(message));
     });
-
+    this.pub.on('error', manageError);
+    this.sub.on('error', manageError);
 };
+
+function manageError(e) {
+    console.error('PubSub error:', e);
+}
 
 /* Event emitter inheritance */
 PubSub.prototype = EventEmitter;
 util.inherits(PubSub, EventEmitter);
 
 PubSub.prototype.publish = function (channel, message) {
+    if (process.env.DEBUG) {
+        var _n = 30 + (new Buffer(channel).toJSON().reduce(function (a, b) {
+            return a + b;
+        }, 0) % 7);
+        console.log('\x1b[1;%dm %s -> %j\x1b[0m', _n, channel, message);
+    }
 
     this.pub.publish(channel, JSON.stringify(message));
 };
@@ -33,9 +44,5 @@ PubSub.prototype.subscribe = function (channel) {
 PubSub.prototype.unsubscribe = function (channel) {
     this.sub.unsubscribe(channel);
 };
-
-PubSub.prototype.multi = function () {
-    return this.sub.multi();
-}
 
 module.exports = PubSub;
