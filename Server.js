@@ -59,8 +59,8 @@ var consume = function (request, data, callback) {
  * @return {[type]}          [description]
  */
 pubSub.on('message', function (channel, request) {
-    //decode the 
-    // console.log(request.action);    
+    //decode the
+    // console.log(request.action);
     console.log('Message id %s receive from \'%s\' with the action \'%s\'', request.uid, request.from, request.action);
     var data = validate(request);
 
@@ -87,10 +87,12 @@ pubSub.on('message', function (channel, request) {
         {
             var key = Object.keys(request.consume)[0];
             client.get(key, function (err, value) {
-                value = JSON.parse(value);
-                var provider = key + ':' + value.uid;
-                request.to = key;
-                pubSub.publish(provider, request);
+                if (!err && !!value) {
+                    value = JSON.parse(value);
+                    var provider = key + ':' + value.uid;
+                    request.to = key;
+                    pubSub.publish(provider, request);
+                }
             });
         }
     }
