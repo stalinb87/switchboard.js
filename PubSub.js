@@ -3,8 +3,11 @@ var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 
 var PubSub = function () {
-    this.sub = redis.createClient();
-    this.pub = redis.createClient();
+    var _redis = (process.env.REDIS || ':').split(':');
+    var port = Number(_redis[1]) || 6379;
+    var host = _redis[0] || '127.0.0.1';
+    this.sub = redis.createClient(port, host);
+    this.pub = redis.createClient(port, host);
     /* Event emitter inheritance */
     EventEmitter.call(this);
     var self = this;

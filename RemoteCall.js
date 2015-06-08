@@ -40,23 +40,27 @@ module.exports = {
 
         return methods.reduce(function (_calls, method) {
             var _params = {
-                    method: method.method
-                },
+                method: method.method
+            },
                 _call = {
                     run: function () {
                         var defer = Q.defer();
+                        var uid = uuid.v4();
+
                         ipc.makeCall({
                             action: 'request',
                             token: ipc.token,
                             from: ipc.namespace,
                             to: provider,
-                            uid: uuid.v4(),
+                            uid: uid,
                             methodCall: _params
                         }, defer);
                         return defer.promise;
                     }
                 };
-            _call.then = _call.run;
+            _call.then = function (success, fail, notify) {
+                return _call.run().then(success, fail, notify);
+            };
 
             method.params.forEach(function (param) {
                 _call[param] = function (value) {

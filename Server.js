@@ -85,10 +85,11 @@ pubSub.on('message', function (channel, request) {
         {
             var key = Object.keys(request.consume)[0];
             client.get(key, function (err, value) {
-                if (!err && !!value) {
+                if (!err && !! value) {
                     value = JSON.parse(value);
                     var provider = key + ':' + value.uid;
                     request.to = key;
+                    console.log('responding with', request);
                     pubSub.publish(provider, request);
                 }
             });

@@ -53,6 +53,7 @@ function IPC(namespace, token) {
             switch (response.action) {
             case 'request':
                 {
+
                     return remoteCall.provider(self, response);
                     break;
                 }
@@ -118,8 +119,9 @@ function IPC(namespace, token) {
             case 'provides':
                 {
                     //@todo build the object and modify toResponse to be the resolve value
-                    // console.log('\x1b[1;35m', channel, response, '\x1b[0m');
+
                     toResponse = remoteCall.consumer(self, response);
+
                     break;
                 }
             }
@@ -132,10 +134,16 @@ function IPC(namespace, token) {
                 //send the response  when promise is resolve on the on subscribe event
 
                 if (response.action === 'response' && response.from === ipcNamespace) {
+
                     registrationResponse = response;
                 } else {
-                    console.log('\x1b[1;41;37m%j\x1b[0m', response);
-                    self.promises[response.uid].promise.resolve(response);
+                    // toResponse = response;
+
+
+
+
+                    self.promises[response.uid].promise.resolve(toResponse);
+                    delete self.promises[response.uid];
                 }
             }
         } catch (err) {
@@ -190,6 +198,8 @@ IPC.prototype.add = function (key, value) {
  * @param  {Object} options an list of option that override the default maxAttemps and timeout
  */
 IPC.prototype.makeCall = function (request, defer, options) {
+
+
     var promises = this.promises;
     var self = this;
     //if this method was call and the promise exist is because the timeout was expired, and is making the call again

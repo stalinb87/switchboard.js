@@ -1,0 +1,11 @@
+{
+    "namespace": "com.starvox.batman",
+    "token": "com.starvox.batman",
+    "consumes": {
+        "com.starvox.core.telephony": ["call", "forward"]
+    },
+    "provide": true,
+    "ipc": {
+        "address": "127.0.0.1"
+    }
+}

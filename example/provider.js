@@ -9,9 +9,9 @@ ipc.add('suma', suma);
 
 ipc.register()
     .then(function (response) {
-        console.log('The promise was resolve with the value', response);
+        console.log('Successfully register to the server');
     }, function (err) {
-        console.log(err);
+        console.log('Could not connect to the server %s', err.message);
     }, function (cont) {
-        console.log('Intento numero %s', cont);
+        console.log('Server not reponse, trying to connect, attempt %s', cont);
     });
