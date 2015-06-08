@@ -19,9 +19,9 @@ function test() {
                     .b(b)
                     .then(function (res) {
                         if ((a + b) === res.data) {
-                            console.log('Response to %s with %d + %d=%d', namespace, a, b, res.data);
+                            console.log('SUCCESS: Response to %s with %d + %d = %d', namespace, a, b, res.data);
                         } else {
-                            console.log('Response incorrect %s with %d + %d=%d', namespace, a, b, res.data);
+                            console.log('ERROR:   Response to %s with %d + %d = %d', namespace, a, b, res.data);
                         }
                         t = Date.now() - t;
                         if (t > mayor) {

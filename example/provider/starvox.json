@@ -1,0 +1,5 @@
+{
+    "namespace": "com.starvox.core.telephony",
+    "token": "com.starvox.core.telephony",
+    "provide": true
+}
