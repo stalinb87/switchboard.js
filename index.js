@@ -2,12 +2,25 @@ var IPC = require('./ipc');
 var path = require('path');
 var fs = require('fs');
 var Q = require('q');
+var starvox = require('../starvox-conf')();
+
 var IPCWrapper = function (providers) {
-    return Q.Promise(function (resolve, reject, notify) {
+    this.providers = providers;
+    this.connector;
+    this.isConnected = false;
+};
+IPCWrapper.prototype.addMethods = function (providers) {
+    if (this.isConnected && this.connector) {
+        this.connector.add(providers);
+        this.providers = providers;
+    }
+};
+IPCWrapper.prototype.connect = function () {
+    var self = this;
+    var _promise = Q.Promise(function (resolve, reject, notify) {
         var starvoxPath = path.join(process.cwd(), 'starvox.json');
         var config = JSON.parse(fs.readFileSync(starvoxPath).toString());
-
-        var ipc = new IPC(config.namespace, config.token);
+        var ipc = self.connector = new IPC(config.namespace, config.token, starvox);
         var tasks = [];
         //count how many promise are
         var count = config.provide ? 1 : 0;
@@ -28,7 +41,7 @@ var IPCWrapper = function (providers) {
                     notify(err);
                 }
             });
-            ipc.add(providers);
+            ipc.add(self.providers);
             tasks.push(registration);
         }
 
@@ -72,7 +85,13 @@ var IPCWrapper = function (providers) {
         catch (function (err) {
             reject(err);
         });
+
+    });
+    return _promise.then(function (resolution, registration) {
+        self.isConnected = true;
+        return Q.promise(function (resolve) {
+            resolve(resolution, registration);
+        });
     });
 };
-
 module.exports = IPCWrapper;

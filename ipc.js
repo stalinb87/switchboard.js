@@ -1,5 +1,4 @@
 //the pubsub driver
-var pubSub = require('./PubSub');
 
 var remoteCall = require('./RemoteCall');
 
@@ -23,7 +22,7 @@ var timeout = 5000;
  * @param {[type]} namespace [description]
  * @param {[type]} token     [description]
  */
-function IPC(namespace, token) {
+function IPC(namespace, token, starvoxConf) {
     var self = this;
     var registrationResponse;
     //the list of promise that will be save on every message
@@ -44,7 +43,7 @@ function IPC(namespace, token) {
     //should be a key method object ex: {call: function(param1, param2...){}};
     this.methods = {};
 
-    this.pubSub = new(require('./PubSub'))();
+    this.pubSub = new(require('./PubSub'))(starvoxConf);
 
     //handle all message received
     this.pubSub.on('message', function (channel, response) {

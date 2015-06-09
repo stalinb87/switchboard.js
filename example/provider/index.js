@@ -10,7 +10,7 @@ var provitions = {
 };
 
 var ipc = new IPC(provitions);
-ipc.then(function () {
+ipc.connect().then(function () {
     console.log('register successfully');
 }).
 catch (function (err) {
