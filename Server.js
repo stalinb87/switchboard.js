@@ -58,8 +58,7 @@ var consume = function (request, data, callback) {
  * @return {[type]}          [description]
  */
 pubSub.on('message', function (channel, request) {
-    //decode the
-    // console.log(request.action);
+
     console.log('Message id %s receive from \'%s\' with the action \'%s\'', request.uid, request.from, request.action);
     var data = validate(request);
 
@@ -75,9 +74,10 @@ pubSub.on('message', function (channel, request) {
                         action: 'response',
                         uid: request.uid,
                         from: ipcNamespace,
-                        to: data.namespace + ':' + provider.uid
+                        to: request.from + ':' + provider.uid
                     };
                 }
+                console.log('Message id %s send to \'%s\' with the action \'%s\'', response.uid, response.to, response.action);
                 pubSub.publish(data.namespace, response);
             });
             break;
@@ -90,7 +90,7 @@ pubSub.on('message', function (channel, request) {
                     value = JSON.parse(value);
                     var provider = key + ':' + value.uid;
                     request.to = key;
-                    console.log('responding with', request);
+                    console.log('Message id %s send to \'%s\' with the action \'%s\'', request.uid, request.to, request.action);
                     pubSub.publish(provider, request);
                 }
             });

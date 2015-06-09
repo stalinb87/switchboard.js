@@ -1,3 +1,4 @@
+"use strict";
 //the pubsub driver
 
 var remoteCall = require('./RemoteCall');
@@ -54,7 +55,7 @@ function IPC(namespace, token, starvoxConf) {
                 {
 
                     return remoteCall.provider(self, response);
-                    break;
+                    //break;
                 }
             case 'response':
                 {
@@ -89,25 +90,28 @@ function IPC(namespace, token, starvoxConf) {
                         delete response.token;
 
                         for (var method in methods) {
-                            method = methods[method];
+                            if (methods[method]) {
+                                method = methods[method];
 
-                            // Validate this method exists
-                            if (!self.methods[method]) {
-                                response.error = {
-                                    code: 'XXXX-1',
-                                    message: 'Unknown method called: ' + method
-                                };
-                                break;
+                                // Validate this method exists
+                                if (!self.methods[method]) {
+                                    response.error = {
+                                        code: 'XXXX-1',
+                                        message: 'Unknown method called: ' + method
+                                    };
+                                    break;
+                                }
+
+                                // Extract parameters
+                                var params = remoteCall.getParameters(self.methods[method]);
+
+                                response.methods.push({
+                                    method: method,
+                                    params: params
+                                });
                             }
-
-                            // Extract parameters
-                            var params = remoteCall.getParameters(self.methods[method]);
-
-                            response.methods.push({
-                                method: method,
-                                params: params
-                            });
                         }
+
 
                         //response with the method construction
                         self.pubSub.publish(response.to, response);
@@ -162,7 +166,7 @@ function IPC(namespace, token, starvoxConf) {
             console.error(err.stack);
         }
     });
-};
+}
 
 /**
  * As a provider, add a method(or methods) to the list of methods that i provide
@@ -216,7 +220,7 @@ IPC.prototype.makeCall = function (request, defer, options) {
     //the promise exist, but is not reached the max attemp yet
     if (promises[request.uid]) {
         promises[request.uid].promise.notify(promises[request.uid].attemp);
-        promises[request.uid].attemp++;
+        promises[request.uid].attemp += 1;
     } else {
         // promise not exist create it
         promises[request.uid] = {

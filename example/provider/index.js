@@ -1,7 +1,10 @@
 var IPC = require('../../');
 var provitions = {
-    call: function (to, cb) {
-        cb(null, 'calling to ' + to);
+    reload: function (partition, model, before, after, action, cb) {
+        console.log('reloading partition %s in %s with action %s', partition, model, action);
+        console.log('before', before.label);
+        console.log('after', after.label);
+        cb(null, 'cool');
     },
     forward: function (from, to, cb) {
         cb(null, 'forward success from ' + from + ' to ' + to);

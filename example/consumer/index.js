@@ -9,10 +9,10 @@ ipc.connect().then(function (response) {
         console.log(forward);
     });
     var connector = ipc.connector;
-    connector.pubSub.end();
-    connector.pubSub.on('end', function () {
-        console.log('ending');
-    });
+    // connector.pubSub.end();
+    // connector.pubSub.on('end', function () {
+    //     console.log('ending');
+    // });
 }).
 catch (function (err) {
     console.log(err.stack);
