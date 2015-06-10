@@ -44,6 +44,7 @@ function IPC(namespace, token, starvoxConf) {
     //should be a key method object ex: {call: function(param1, param2...){}};
     this.methods = {};
 
+    this.consumes = {};
     this.pubSub = new(require('./PubSub'))(starvoxConf);
 
     //handle all message received
@@ -51,6 +52,11 @@ function IPC(namespace, token, starvoxConf) {
         var toResponse = response;
         try {
             switch (response.action) {
+            case 'event':
+                {
+
+                    break;
+                }
             case 'request':
                 {
 
@@ -112,7 +118,7 @@ function IPC(namespace, token, starvoxConf) {
                             }
                         }
 
-
+                        console.log(response);
                         //response with the method construction
                         self.pubSub.publish(response.to, response);
                     }
@@ -121,10 +127,11 @@ function IPC(namespace, token, starvoxConf) {
 
             case 'provides':
                 {
-                    //@todo build the object and modify toResponse to be the resolve value
+                    //get the namespace from where come the message
 
                     toResponse = remoteCall.consumer(self, response);
-
+                    var fromNamespace = response.from.replace(/:[0-9a-zA-Z_\-\.]+$/, '');
+                    self.consumes[fromNamespace] = toResponse;
                     break;
                 }
             }

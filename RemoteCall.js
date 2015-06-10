@@ -12,6 +12,14 @@ module.exports = {
 
         return _params;
     },
+    paramCall: function (ipc, fn, params, $done) {
+        var _params = this.getParameters(fn).reduce(function (result, p) {
+            result.push(params[p]);
+            return result;
+        }, []);
+        _params.push($done || function () {});
+        fn.apply(ipc, _params);
+    },
     provider: function (ipc, response) {
         var fn = ipc.methods[response.methodCall.method];
         var params = this.getParameters(fn).reduce(function (_params, p) {
@@ -41,8 +49,8 @@ module.exports = {
 
         return methods.reduce(function (_calls, method) {
             var _params = {
-                method: method.method
-            },
+                    method: method.method
+                },
                 _call = {
                     run: function () {
                         var defer = Q.defer();

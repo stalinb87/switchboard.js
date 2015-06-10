@@ -6,9 +6,11 @@ var provitions = {
         console.log('after', after.label);
         cb(null, 'cool');
     },
+    origin: function (to, cb) {
+        cb(null, 'calling ' + to);
+    },
     forward: function (from, to, cb) {
         cb(null, 'forward success from ' + from + ' to ' + to);
-
     }
 };
 

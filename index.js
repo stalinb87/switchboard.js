@@ -27,6 +27,14 @@ IPCWrapper.prototype.addMethods = function (providers) {
     this.providers = providers;
 };
 
+IPCWrapper.prototype.emit = function (eventType, message) {
+    if (this.isConnected) {
+        var uuid = this.connector.channel.replace(this.connector.namespace);
+        var channel = this.connector.namespace + '.event.' + ':' + uuid;
+        this.connector.publish(channel, message);
+    }
+};
+
 /**
  * Add a method to the ipc as a provider
  * @param {string}   key the method name

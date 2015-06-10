@@ -30,12 +30,10 @@ var PubSub = function (config) {
     var host = config.redis.host || '127.0.0.1';
     this.sub = redis.createClient(port, host);
     this.pub = redis.createClient(port, host);
-
     if (config.redis.pass) {
         this.sub.auth(config.redis.pass);
         this.pub.auth(config.redis.pass);
     }
-
     /* Event emitter inheritance */
     EventEmitter.call(this);
     var self = this;
@@ -67,7 +65,9 @@ var PubSub = function (config) {
 
 
 
-
+function manageError(e) {
+    console.error('PubSub error:', e);
+}
 
 /* Event emitter inheritance */
 PubSub.prototype = EventEmitter;
