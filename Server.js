@@ -1,5 +1,6 @@
 "use strict";
-var pubSub = new(require('./PubSub'))();
+var starvox = require('../starvox-conf')();
+var pubSub = new(require('./PubSub'))(starvox);
 var ipcNamespace = 'com.starvox.core.ipc';
 var redis = require('redis');
 var uuid = require('uuid');
@@ -100,8 +101,3 @@ pubSub.on('message', function (channel, request) {
 
 
 var server = new Server();
-
-// IPC.prototype.add = function (funcName, callback) {
-//     this.callback = callback;
-//     pubSub.publish(this.namespace);
-// };
