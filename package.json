@@ -1,15 +1,13 @@
 {
-  "name": "IPC",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "q": "^1.4.1",
-    "uuid": "~2.0.1"
-  }
+    "name": "IPC",
+    "version": "0.0.1",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "Stalin Bonilla",
+    "dependencies": {
+        "q": "^1.4.1",
+        "uuid": "~2.0.1"
+    }
 }
