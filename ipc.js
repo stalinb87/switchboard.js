@@ -55,6 +55,7 @@ function IPC(namespace, token, starvoxConf) {
             case 'event':
                 {
 
+                    self.consumes[response.from].emit(response.type, response.data);
                     break;
                 }
             case 'request':
@@ -85,13 +86,19 @@ function IPC(namespace, token, starvoxConf) {
                     if (key) {
                         //get the methods that require the consumer
                         var methods = response.consume[key];
-
+                        var requestEvents = false;
                         //this should be temporal after Rilke builds the
                         //method description
                         response.methods = [];
                         response.to = response.from;
                         response.from = self.channel;
                         response.action = 'provides';
+                        var eventIndex = methods.indexOf('events')
+                        if (eventIndex !== -1) {
+                            //request events
+                            methods.splice(eventIndex, 1);
+                            requestEvents = true;
+                        }
                         delete response.consume;
                         delete response.token;
 
@@ -117,8 +124,12 @@ function IPC(namespace, token, starvoxConf) {
                                 });
                             }
                         }
-
-                        console.log(response);
+                        if (requestEvents) {
+                            //request events? construct the channel of the event
+                            // var channel = 
+                            var eventChannel = self.channel.replace(/(:[^:]+)$/, '.events$1')
+                            response.events = [eventChannel];
+                        }
                         //response with the method construction
                         self.pubSub.publish(response.to, response);
                     }
@@ -128,10 +139,15 @@ function IPC(namespace, token, starvoxConf) {
             case 'provides':
                 {
                     //get the namespace from where come the message
-
                     toResponse = remoteCall.consumer(self, response);
                     var fromNamespace = response.from.replace(/:[0-9a-zA-Z_\-\.]+$/, '');
                     self.consumes[fromNamespace] = toResponse;
+                    if (response.events) {
+                        // if receive namespace events subscribe to all
+                        response.events.forEach(function (eventNamespace) {
+                            self.pubSub.subscribe(eventNamespace);
+                        });
+                    }
                     break;
                 }
             }
@@ -160,10 +176,12 @@ function IPC(namespace, token, starvoxConf) {
     });
 
     this.pubSub.on('subscribe', function (channel) {
+
         //is subscribing to the new channel, there is a registration response y there is a promise
         //now, can resolve the promise and unsubscribe from the temporal channel
         try {
-            if (channel === self.channel && registrationResponse && self.promises[registrationResponse.uid]) {
+            // console.log(channel.replace(\\))
+            if (channel.replace(/^[\w\-_]+:/, '') === self.channel && registrationResponse && self.promises[registrationResponse.uid]) {
                 self.promises[registrationResponse.uid].promise.resolve(registrationResponse);
                 delete self.promises[registrationResponse.uid];
                 // self.pubSub.unsubscribe(self.namespace);

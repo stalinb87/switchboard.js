@@ -21,3 +21,7 @@ ipc.connect().then(function () {
 catch (function (err) {
     console.log(err.stack);
 });
+
+setTimeout(function () {
+    ipc.emit('call', 'Please call me later');
+}, 2000);

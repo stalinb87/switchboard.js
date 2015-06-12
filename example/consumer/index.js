@@ -2,12 +2,15 @@ var IPC = require('../../');
 var ipc = new IPC();
 
 ipc.connect().then(function (response) {
-    response.telephony.origin.to(152).then(function (call) {
-        console.log(call);
+    response.telephony.on('call', function (message) {
+        console.log("receiving message", message);
     });
-    response.telephony.forward.from(134).to(135).then(function (forward) {
-        console.log(forward);
-    });
+    // response.telephony.origin.to(152).then(function (call) {
+    //     console.log(call);
+    // });
+    // response.telephony.forward.from(134).to(135).then(function (forward) {
+    //     console.log(forward);
+    // });
     var connector = ipc.connector;
     // connector.pubSub.end();
     // connector.pubSub.on('end', function () {

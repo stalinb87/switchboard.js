@@ -29,9 +29,14 @@ IPCWrapper.prototype.addMethods = function (providers) {
 
 IPCWrapper.prototype.emit = function (eventType, message) {
     if (this.isConnected) {
-        var uuid = this.connector.channel.replace(this.connector.namespace);
-        var channel = this.connector.namespace + '.event.' + ':' + uuid;
-        this.connector.publish(channel, message);
+        var channel = this.connector.channel.replace(/(:[^:]+)$/, '.events$1');
+        var eventMessage = {
+            from: this.connector.namespace,
+            data: message,
+            action: 'event',
+            type: eventType
+        };
+        this.connector.pubSub.publish(channel, eventMessage);
     }
 };
 

@@ -1,7 +1,13 @@
 "use strict";
 var Q = require('q');
 var uuid = require('uuid');
-
+var util = require('util');
+var EventEmitter = require('events').EventEmitter;
+var RemoteObject = function () {
+    EventEmitter.call(this);
+};
+RemoteObject.prototype = EventEmitter;
+util.inherits(RemoteObject, EventEmitter);
 module.exports = {
     getParameters: function (fn) {
         var _params = fn.toString()
@@ -47,10 +53,11 @@ module.exports = {
         var provider = response.from;
         var methods = response.methods;
 
-        return methods.reduce(function (_calls, method) {
+        var provide = new RemoteObject();
+        methods.reduce(function (_calls, method) {
             var _params = {
-                    method: method.method
-                },
+                method: method.method
+            },
                 _call = {
                     run: function () {
                         var defer = Q.defer();
@@ -77,10 +84,12 @@ module.exports = {
                     return _call;
                 };
             });
-
+            provide[method.method] = _call;
             _calls[method.method] = _call;
 
             return _calls;
         }, {});
+        console.log(provide);
+        return provide
     }
 };
