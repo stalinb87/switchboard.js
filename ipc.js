@@ -32,6 +32,8 @@ function IPC(namespace, token, starvoxConf) {
     //the current namespace
     this.namespace = namespace;
 
+    this.partitionNamespace = starvox.getPartition() + ':' + this.namespace;
+
     //the channel to listen for message;
     this.channel = null;
     //the current token for this worker
@@ -55,7 +57,6 @@ function IPC(namespace, token, starvoxConf) {
             switch (response.action) {
             case 'event':
                 {
-                    console.log(response);
                     self.consumes[response.from].emit(response.type, response.data);
                     break;
                 }
