@@ -50,11 +50,12 @@ function IPC(namespace, token, starvoxConf) {
     //handle all message received
     this.pubSub.on('message', function (channel, response) {
         var toResponse = response;
+
         try {
             switch (response.action) {
             case 'event':
                 {
-
+                    console.log(response);
                     self.consumes[response.from].emit(response.type, response.data);
                     break;
                 }
@@ -82,6 +83,7 @@ function IPC(namespace, token, starvoxConf) {
                     //here the server send a consume request, is neccesary that
                     //the provider response with the method construction of the request methods
                     //get the namespace to consume
+
                     var key = Object.keys(response.consume)[0];
                     if (key) {
                         //get the methods that require the consumer
@@ -125,9 +127,9 @@ function IPC(namespace, token, starvoxConf) {
                             }
                         }
                         if (requestEvents) {
-                            //request events? construct the channel of the event
-                            // var channel = 
-                            var eventChannel = self.channel.replace(/(:[^:]+)$/, '.events$1')
+                            //request events? construct the channel of the event                           
+                            var eventChannel = self.channel.replace(/(:[^:]+)$/, '.events$1');
+                            eventChannel = eventChannel.replace(/^[\w_\-]+:/, '');
                             response.events = [eventChannel];
                         }
                         //response with the method construction
@@ -138,6 +140,7 @@ function IPC(namespace, token, starvoxConf) {
 
             case 'provides':
                 {
+
                     //get the namespace from where come the message
                     toResponse = remoteCall.consumer(self, response);
                     var fromNamespace = response.from.replace(/:[0-9a-zA-Z_\-\.]+$/, '');
@@ -145,7 +148,7 @@ function IPC(namespace, token, starvoxConf) {
                     if (response.events) {
                         // if receive namespace events subscribe to all
                         response.events.forEach(function (eventNamespace) {
-                            self.pubSub.subscribe(eventNamespace);
+                            self.pubSub.subscribe(starvox.getPartition() + ':' + eventNamespace);
                         });
                     }
                     break;
@@ -181,7 +184,7 @@ function IPC(namespace, token, starvoxConf) {
         //now, can resolve the promise and unsubscribe from the temporal channel
         try {
             // console.log(channel.replace(\\))
-            if (channel.replace(/^[\w\-_]+:/, '') === self.channel && registrationResponse && self.promises[registrationResponse.uid]) {
+            if (channel === self.channel && registrationResponse && self.promises[registrationResponse.uid]) {
                 self.promises[registrationResponse.uid].promise.resolve(registrationResponse);
                 delete self.promises[registrationResponse.uid];
                 // self.pubSub.unsubscribe(self.namespace);
@@ -275,7 +278,7 @@ IPC.prototype.register = function () {
     var request = {
         action: 'register',
         token: this.token,
-        from: this.namespace,
+        from: starvox.getPartition() + ':' + this.namespace,
         to: ipcNamespace,
         uid: uid
     };
@@ -285,7 +288,7 @@ IPC.prototype.register = function () {
 };
 
 IPC.prototype.consume = function (namespace, methods) {
-    this.pubSub.subscribe(this.namespace);
+    this.pubSub.subscribe(starvox.getPartition() + ':' + this.namespace);
     var self = this;
     var defer = Q.defer();
     var uid = uuid.v4();
@@ -294,7 +297,7 @@ IPC.prototype.consume = function (namespace, methods) {
     var request = {
         action: 'consume',
         token: this.token,
-        from: this.namespace,
+        from: starvox.getPartition() + ':' + this.namespace,
         to: ipcNamespace,
         uid: uid,
         consume: consume

@@ -14,10 +14,11 @@ function Server() {
 
 var validate = function (request) {
     return {
-        namespace: request.token
+        namespace: request.from
     };
 };
 var register = function (request, data, callback) {
+    console.log(request);
     //@todo validate token
     var namespace = data.namespace;
     client.get(namespace, function (err, value) {
@@ -40,6 +41,7 @@ var register = function (request, data, callback) {
 
 var consume = function (request, data, callback) {
     client.get(request.to, function (err, value) {
+
         if (err) {
             return callback(err);
         }
@@ -65,6 +67,7 @@ pubSub.on('message', function (channel, request) {
     switch (request.action) {
     case 'register':
         {
+
             register(request, data, function (err, provider) {
                 var response = {};
                 if (err) {

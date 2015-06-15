@@ -27,16 +27,17 @@ IPCWrapper.prototype.addMethods = function (providers) {
     this.providers = providers;
 };
 
-IPCWrapper.prototype.emit = function (eventType, message) {
+IPCWrapper.prototype.emit = function (eventType, message, partition) {
+
     if (this.isConnected) {
         var channel = this.connector.channel.replace(/(:[^:]+)$/, '.events$1');
         var eventMessage = {
-            from: this.connector.namespace,
+            from: starvox.getPartition() + ':' + this.connector.namespace,
             data: message,
             action: 'event',
             type: eventType
         };
-        this.connector.pubSub.publish(channel, eventMessage);
+        this.connector.pubSub.publish(channel.replace(/^[\w_\-]+:/, ''), eventMessage, partition);
     }
 };
 

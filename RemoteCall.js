@@ -66,7 +66,7 @@ module.exports = {
                         ipc.makeCall({
                             action: 'request',
                             token: ipc.token,
-                            from: ipc.namespace,
+                            from: global.starvox.getPartition() + ':' + ipc.namespace,
                             to: provider,
                             uid: uid,
                             methodCall: _params

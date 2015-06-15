@@ -19,6 +19,13 @@ var redis = require('redis'),
     function manageError(e) {
         console.error('PubSub error:', e);
     }
+
+    /**
+     * Ask if a channel already has a partition
+     */
+    function hasPartition(channel) {
+        return /^[\w_\-]+:/.test(channel);
+    }
     /**
      * PubSub object with publish and subscription
      * @param {Object} config A configuration object with the connection to redis
@@ -65,9 +72,7 @@ var PubSub = function (config) {
 
 
 
-function manageError(e) {
-    console.error('PubSub error:', e);
-}
+
 
 /* Event emitter inheritance */
 PubSub.prototype = EventEmitter;
@@ -94,15 +99,17 @@ PubSub.prototype.manageEnd = function () {
  * @param  {string} channel The channel to publish
  * @param  {Object} message the message to publish
  */
-PubSub.prototype.publish = function (channel, message) {
-    // if (process.env.DEBUG) {
-    //     var _n = 30 + (new Buffer(channel).toJSON().reduce(function (a, b) {
-    //         return a + b;
-    //     }, 0) % 7);
-    //     console.log('\x1b[1;%dm %s -> %j\x1b[0m', _n, channel, message);
-    // }    
-    if (channel !== ipcNamespace) {
-        channel = this.partition + ':' + channel;
+PubSub.prototype.publish = function (channel, message, partition) {
+
+    if (channel !== ipcNamespace && !hasPartition(channel)) {
+        partition = partition || this.partition;
+        channel = partition + ':' + channel;
+    }
+    if (process.env.DEBUG) {
+        var _n = 40 + (new Buffer(channel).toJSON().data.reduce(function (a, b) {
+            return a + b;
+        }, 0) % 7);
+        console.log('\x1b[1;%s;37m publishing: %s -> %j\x1b[0m', _n, channel, message);
     }
     this.pub.publish(channel, JSON.stringify(message));
 };
@@ -112,8 +119,15 @@ PubSub.prototype.publish = function (channel, message) {
  * @param  {string} channel The channel to subscribe
  */
 PubSub.prototype.subscribe = function (channel) {
-    if (channel !== ipcNamespace) {
+
+    if (channel !== ipcNamespace && !hasPartition(channel)) {
         channel = this.partition + ':' + channel;
+    }
+    if (process.env.DEBUG) {
+        var _n = 41 + (new Buffer(channel).toJSON().data.reduce(function (a, b) {
+            return a + b;
+        }, 0) % 6);
+        console.log('\x1b[1;%s;37m subscribing to %s\x1b[0m', _n, channel);
     }
     this.sub.subscribe(channel);
 };
@@ -123,7 +137,7 @@ PubSub.prototype.subscribe = function (channel) {
  * @param  {String} channel The channel to unsubscribe
  */
 PubSub.prototype.unsubscribe = function (channel) {
-    if (channel !== ipcNamespace) {
+    if (channel !== ipcNamespace && !hasPartition(channel)) {
         channel = this.partition + ':' + channel;
     }
     this.sub.unsubscribe(channel);

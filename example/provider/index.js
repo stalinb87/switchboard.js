@@ -23,5 +23,6 @@ catch (function (err) {
 });
 
 setTimeout(function () {
-    ipc.emit('call', 'Please call me later');
-}, 2000);
+    console.log('emiting vaina');
+    ipc.emit('call', 'Please call me later', 'tutaca');
+}, 5000);
