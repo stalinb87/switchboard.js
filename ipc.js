@@ -75,7 +75,9 @@ function IPC(namespace, token, starvoxConf) {
                         self.pubSub.subscribe(response.to);
                         self.isRegister = true;
                     } else {
-                        //llamada a un request
+                        if (response.error && self.promises[response.uid]) {
+                            return self.promises[response.uid].promise.reject(response.error);
+                        }
                     }
                     break;
                 }
