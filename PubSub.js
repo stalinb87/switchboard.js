@@ -9,27 +9,29 @@ var redis = require('redis'),
     EventEmitter = require('events').EventEmitter,
     isEnding = false,
     endingCount = 0,
-    ipcNamespace = 'com.starvox.core.ipc'
+    ipcNamespace = 'com.starvox.core.ipc';
+var debug = require('debug')('starvox:ipc');
 
 
-    /**
-     * A function that handle error
-     * @param  {Error} e An Error object
-     */
-    function manageError(e) {
-        console.error('PubSub error:', e);
-    }
 
-    /**
-     * Ask if a channel already has a partition
-     */
-    function hasPartition(channel) {
-        return /^[\w_\-]+:/.test(channel);
-    }
-    /**
-     * PubSub object with publish and subscription
-     * @param {Object} config A configuration object with the connection to redis
-     */
+/**
+ * A function that handle error
+ * @param  {Error} e An Error object
+ */
+function manageError(e) {
+    console.error('PubSub error:', e);
+}
+
+/**
+ * Ask if a channel already has a partition
+ */
+function hasPartition(channel) {
+    return /^[\w_\-]+:/.test(channel);
+}
+/**
+ * PubSub object with publish and subscription
+ * @param {Object} config A configuration object with the connection to redis
+ */
 var PubSub = function (config) {
     this.partition = config.partition;
     //setting the redis configuration
@@ -105,12 +107,9 @@ PubSub.prototype.publish = function (channel, message, partition) {
         partition = partition || this.partition;
         channel = partition + ':' + channel;
     }
-    if (process.env.DEBUG) {
-        var _n = 40 + (new Buffer(channel).toJSON().data.reduce(function (a, b) {
-            return a + b;
-        }, 0) % 7);
-        console.log('\x1b[1;%s;37m publishing: %s -> %j\x1b[0m', _n, channel, message);
-    }
+
+    debug('publishing: %s -> %j', channel, message);
+
     this.pub.publish(channel, JSON.stringify(message));
 };
 
@@ -123,12 +122,9 @@ PubSub.prototype.subscribe = function (channel) {
     if (channel !== ipcNamespace && !hasPartition(channel)) {
         channel = this.partition + ':' + channel;
     }
-    if (process.env.DEBUG) {
-        var _n = 41 + (new Buffer(channel).toJSON().data.reduce(function (a, b) {
-            return a + b;
-        }, 0) % 6);
-        console.log('\x1b[1;%s;37m subscribing to %s\x1b[0m', _n, channel);
-    }
+
+    debug('subscribing to %s', channel);
+
     this.sub.subscribe(channel);
 };
 

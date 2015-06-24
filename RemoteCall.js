@@ -89,7 +89,6 @@ module.exports = {
 
             return _calls;
         }, {});
-        console.log(provide);
         return provide
     }
 };

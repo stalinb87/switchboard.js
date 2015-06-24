@@ -4,12 +4,16 @@ var pubSub = new(require('./PubSub'))(starvox);
 var ipcNamespace = 'com.starvox.core.ipc';
 var redis = require('redis');
 var uuid = require('uuid');
+var Debuger = require('debug');
+var debugError = new Debuger('starvox:ipc:server:error');
+var debug = new Debuger('starvox:ipc:server');
+var debugInfo = new Debuger('starvox:ipc:server:info');
 var client;
 
 function Server() {
     client = redis.createClient();
     pubSub.subscribe(ipcNamespace);
-    console.log('IPC Server started and subscribe to %s', ipcNamespace);
+    debugInfo('IPC Server started and subscribe to %s', ipcNamespace);
 }
 
 var validate = function (request) {
@@ -18,7 +22,6 @@ var validate = function (request) {
     };
 };
 var register = function (request, data, callback) {
-    console.log(request);
     //@todo validate token
     var namespace = data.namespace;
     client.get(namespace, function (err, value) {
@@ -61,7 +64,8 @@ var consume = function (request, data, callback) {
  */
 pubSub.on('message', function (channel, request) {
 
-    console.log('Message id %s receive from \'%s\' with the action \'%s\'', request.uid, request.from, request.action);
+    debug('Message id %s receive from \'%s\' with the action \'%s\'', request.uid, request.from, request.action);
+
     var data = validate(request);
 
     switch (request.action) {
@@ -80,7 +84,9 @@ pubSub.on('message', function (channel, request) {
                         to: request.from + ':' + provider.uid
                     };
                 }
-                console.log('Message id %s send to \'%s\' with the action \'%s\'', response.uid, response.to, response.action);
+
+                debug('Message id %s send to \'%s\' with the action \'%s\'', response.uid, response.to, response.action);
+
                 pubSub.publish(data.namespace, response);
             });
             break;
@@ -93,7 +99,9 @@ pubSub.on('message', function (channel, request) {
                     value = JSON.parse(value);
                     var provider = key + ':' + value.uid;
                     request.to = key;
-                    console.log('Message id %s send to \'%s\' with the action \'%s\'', request.uid, request.to, request.action);
+
+                    debug('Message id %s send to \'%s\' with the action \'%s\'', request.uid, request.to, request.action);
+
                     pubSub.publish(provider, request);
                 }
             });

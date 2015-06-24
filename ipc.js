@@ -2,7 +2,10 @@
 //the pubsub driver
 
 var remoteCall = require('./RemoteCall');
-
+var Debuger = require('debug');
+var debugError = new Debuger('starvox:error:ipc');
+var debug = new Debuger('starvox:ipc');
+var debugInfo = new Debuger('starvox:info:ipc');
 //a promise baby!!!
 var Q = require('q');
 
@@ -176,8 +179,7 @@ function IPC(namespace, token, starvoxConf) {
                 }
             }
         } catch (err) {
-            console.error('PubSub onMessage error.');
-            console.error(err.stack);
+            debugError('PubSub onMessage error %s', err.stack);
         }
     });
 
@@ -186,15 +188,14 @@ function IPC(namespace, token, starvoxConf) {
         //is subscribing to the new channel, there is a registration response y there is a promise
         //now, can resolve the promise and unsubscribe from the temporal channel
         try {
-            // console.log(channel.replace(\\))
+            
             if (channel === self.channel && registrationResponse && self.promises[registrationResponse.uid]) {
                 self.promises[registrationResponse.uid].promise.resolve(registrationResponse);
                 delete self.promises[registrationResponse.uid];
                 // self.pubSub.unsubscribe(self.namespace);
             }
         } catch (err) {
-            console.error('PubSub subscribe error.');
-            console.error(err.stack);
+            debugError('PubSub subscribe error %s', err.stack);
         }
     });
 }
