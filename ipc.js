@@ -3,9 +3,9 @@
 
 var remoteCall = require('./RemoteCall');
 var Debuger = require('debug');
-var debugError = new Debuger('starvox:error:ipc');
+var debugError = new Debuger('starvox:ipc:error');
 var debug = new Debuger('starvox:ipc');
-var debugInfo = new Debuger('starvox:info:ipc');
+var debugInfo = new Debuger('starvox:ipc:info');
 //a promise baby!!!
 var Q = require('q');
 
@@ -18,7 +18,7 @@ var ipcNamespace = 'com.starvox.core.ipc';
 var maxAttemps = 3;
 
 //default timeout for message between process
-var timeout = 5000;
+var timeout = 30000;
 
 
 /**
@@ -133,7 +133,7 @@ function IPC(namespace, token, starvoxConf) {
                             }
                         }
                         if (requestEvents) {
-                            //request events? construct the channel of the event                           
+                            //request events? construct the channel of the event
                             var eventChannel = self.channel.replace(/(:[^:]+)$/, '.events$1');
                             eventChannel = eventChannel.replace(/^[\w_\-]+:/, '');
                             response.events = [eventChannel];
@@ -188,7 +188,7 @@ function IPC(namespace, token, starvoxConf) {
         //is subscribing to the new channel, there is a registration response y there is a promise
         //now, can resolve the promise and unsubscribe from the temporal channel
         try {
-            
+
             if (channel === self.channel && registrationResponse && self.promises[registrationResponse.uid]) {
                 self.promises[registrationResponse.uid].promise.resolve(registrationResponse);
                 delete self.promises[registrationResponse.uid];
