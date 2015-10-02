@@ -57,23 +57,30 @@ module.exports = {
         methods.reduce(function (_calls, method) {
             var _params = {
                 method: method.method
-            },
-                _call = {
-                    run: function () {
-                        var defer = Q.defer();
-                        var uid = uuid.v4();
+            };
+            var _call = {
+                method: method.method,
+                run: function () {
+                    var defer = Q.defer();
+                    var uid = uuid.v4();
 
-                        ipc.makeCall({
-                            action: 'request',
-                            token: ipc.token,
-                            from: global.starvox.getPartition() + ':' + ipc.namespace,
-                            to: provider,
-                            uid: uid,
-                            methodCall: _params
-                        }, defer);
-                        return defer.promise;
-                    }
-                };
+                    ipc.makeCall({
+                        action: 'request',
+                        token: ipc.token,
+                        from: global.starvox.getPartition() + ':' + ipc.namespace,
+                        to: provider,
+                        uid: uid,
+                        methodCall: _params
+                    }, defer);
+                    return defer.promise.then(function (response) {
+                        var method = _params.method;
+                        _params = {
+                            method: method
+                        };
+                        return response;
+                    });
+                }
+            };
             _call.then = function (success, fail, notify) {
                 return _call.run().then(success, fail, notify);
             };
