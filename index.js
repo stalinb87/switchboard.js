@@ -67,6 +67,7 @@ IPCWrapper.prototype.connect = function () {
         } else {
             config = JSON.parse(fs.readFileSync(starvoxPath).toString());
         }
+        config.namespace = process.env.IPC || config.namespace;
         var ipc = self.connector = new IPC(config.namespace, config.token, starvox);
         var tasks = [];
 
@@ -81,7 +82,7 @@ IPCWrapper.prototype.connect = function () {
         //handle the registration process        
         if (config.provide) {
             var registration = ipc.register().
-            catch (function (err) {
+            catch(function (err) {
                 //if fail add a fail count
                 failCounts += 1;
                 //fails count is the number of total promise,
@@ -108,7 +109,7 @@ IPCWrapper.prototype.connect = function () {
                 var task = ipc.consume(namespace, config.consumes[namespace]).then(function (response) {
                     return response;
                 }).
-                catch (function (err) {
+                catch(function (err) {
                     //if fails remove the namespace from the list of namespace
                     //for not count it in the sucess objects
                     namespaces.splice(ind, 1);
@@ -158,7 +159,7 @@ IPCWrapper.prototype.connect = function () {
             //resolve the promise
             resolve(resolution, registration);
         }).
-        catch (function (err) {
+        catch(function (err) {
             reject(err);
         });
 
