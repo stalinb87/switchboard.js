@@ -4,11 +4,12 @@
  * make all the connection with the ipc for you
  */
 
+var production = process.env.NODE_ENV === 'production';
 var IPC = require('./ipc');
 var path = require('path');
 var fs = require('fs');
 var Q = require('q');
-var starvox = require('../starvox-conf')();
+var starvox = require(production ? 'starvox' : '../config')();
 
 var IPCWrapper = function (providers, conf) {
     this.providers = providers || {};
