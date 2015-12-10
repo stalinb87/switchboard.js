@@ -32,13 +32,13 @@ function test() {
                         }
                         resolve(t);
                     }).
-                catch (function (err) {
+                catch(function (err) {
                     reject(err);
                 });
 
             })
             .
-        catch (function (err) {
+        catch(function (err) {
             reject(err);
         });
     });
@@ -55,6 +55,6 @@ Q.all(tasks).then(function (times) {
     }, 0) / times.length, mayor, menor);
     console.log('\nSufree Perro !!!!!!!\n\n\n\n\n\n');
 }).
-catch (function (err) {
+catch(function (err) {
     console.error('Couldn\'t not connect the provider', err);
 });

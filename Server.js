@@ -1,5 +1,5 @@
-"use strict";
-var starvox = require('../starvox-conf')();
+'use strict';
+var starvox = require('starvox')();
 var pubSub = new(require('./PubSub'))(starvox);
 var ipcNamespace = 'com.starvox.core.ipc';
 var redis = require('redis');
@@ -95,7 +95,7 @@ pubSub.on('message', function (channel, request) {
         {
             var key = Object.keys(request.consume)[0];
             client.get(key, function (err, value) {
-                if (!err && !! value) {
+                if (!err && !!value) {
                     value = JSON.parse(value);
                     var provider = key + ':' + value.uid;
                     request.to = key;

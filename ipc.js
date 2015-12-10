@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 //the pubsub driver
 
 var remoteCall = require('./RemoteCall');
@@ -101,7 +101,7 @@ function IPC(namespace, token, starvoxConf) {
                         response.to = response.from;
                         response.from = self.channel;
                         response.action = 'provides';
-                        var eventIndex = methods.indexOf('events')
+                        var eventIndex = methods.indexOf('events');
                         if (eventIndex !== -1) {
                             //request events
                             methods.splice(eventIndex, 1);

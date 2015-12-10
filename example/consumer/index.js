@@ -1,3 +1,4 @@
+'use strict';
 var IPC = require('../../');
 var ipc = new IPC();
 
@@ -17,6 +18,6 @@ ipc.connect().then(function (response) {
     //     console.log('ending');
     // });
 }).
-catch (function (err) {
+catch(function (err) {
     console.log(err.stack);
 });

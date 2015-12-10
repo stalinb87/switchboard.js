@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 var Q = require('q');
 var uuid = require('uuid');
 var util = require('util');
@@ -96,6 +96,6 @@ module.exports = {
 
             return _calls;
         }, {});
-        return provide
+        return provide;
     }
 };

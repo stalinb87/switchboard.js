@@ -1,15 +1,16 @@
 {
-    "name": "starvox-ipc",
-    "version": "3.0.0",
-    "main": "index.js",
-    "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
-    },
-    "author": "Stalin Bonilla",
-    "dependencies": {
-        "debug": "^2.2.0",
-        "q": "^1.4.1",
-        "redis": "^0.12.1",
-        "uuid": "~2.0.1"
-    }
+  "name": "starvox-ipc",
+  "version": "3.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Stalin Bonilla",
+  "dependencies": {
+    "debug": "^2.2.0",
+    "q": "^1.4.1",
+    "redis": "^0.12.1",
+    "starvox": "git+ssh://git@gitlab.com/starvox/config.git",
+    "uuid": "~2.0.1"
+  }
 }
