@@ -92,7 +92,6 @@ function server(config) {
     });
 }
 
-
 module.exports = function (config) {
     return {
         start: function (cnf) {

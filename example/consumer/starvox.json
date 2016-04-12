@@ -2,6 +2,6 @@
     "namespace": "com.starvox.batman",
     "token": "com.starvox.batman",
     "consumes": {
-        "global:com.starvox.core.telephony": ["origin", "forward", "events"]
+        "default:com.starvox.core.telephony": ["origin", "forward", "events"]
     }
 }

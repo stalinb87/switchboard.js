@@ -9,8 +9,14 @@ ipc.connect().then(function (response) {
     response.telephony.origin.to(152).then(function (call) {
         console.log(call);
     });
-    response.telephony.forward.from(134).to(135).then(function (forward) {
+    response.telephony.forward.from(134)._config({
+        timeout: 1000,
+        maxAttemps: 1
+    }).to(135).then(function (forward) {
         console.log(forward);
+        response.telephony.forward.from(134).then(function (re) {
+            console.log(re);
+        });
     });
     var connector = ipc.connector;
     // connector.pubSub.end();

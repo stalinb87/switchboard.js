@@ -15,7 +15,6 @@ module.exports = {
             .replace(/\s/g, '')
             .split(',');
         _params.pop();
-
         return _params;
     },
     paramCall: function (ipc, fn, params, $done) {
@@ -49,14 +48,15 @@ module.exports = {
             response.action = 'response';
             ipc.pubSub.publish(response.to, response);
         });
-
-
         fn.apply(ipc, params);
     },
     consumer: function (ipc, response) {
         var provider = response.from;
         var methods = response.methods;
-
+        methods = methods.map(function (method) {
+            method.params.push('_config');
+            return method;
+        });
         var provide = new RemoteObject();
         methods.reduce(function (_calls, method) {
             var _params = {
@@ -67,7 +67,11 @@ module.exports = {
                 run: function () {
                     var defer = Q.defer();
                     var uid = uuid.v4();
-
+                    var config;
+                    if (_params._config) {
+                        config = _params._config;
+                        delete _params._config;
+                    }
                     ipc.makeCall({
                         action: 'request',
                         token: ipc.token,
@@ -75,7 +79,7 @@ module.exports = {
                         to: provider,
                         uid: uid,
                         methodCall: _params
-                    }, defer);
+                    }, defer, config);
                     return defer.promise.then(function (response) {
                         var method = _params.method;
                         _params = {
@@ -100,6 +104,7 @@ module.exports = {
 
             return _calls;
         }, {});
+        // console.log('provide', provide);
         return provide;
     }
 };
