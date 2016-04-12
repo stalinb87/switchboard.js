@@ -35,14 +35,18 @@ module.exports = {
 
 
         params.push(function (err, data) {
-            response.error = err;
+            response.error = err ? {
+                code: err.code,
+                message: err.message
+                /*,stack: err.stack*/
+            } : err;
+
             response.data = data;
 
             var from = response.from;
             response.from = response.to;
             response.to = from;
             response.action = 'response';
-
             ipc.pubSub.publish(response.to, response);
         });
 
