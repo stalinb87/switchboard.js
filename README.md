@@ -1,4 +1,5 @@
-switchboard.js
+#Switchboard.js
+
 
 An Inter Process Communication Protocol for node. 
 
@@ -6,7 +7,8 @@ Allow to communicate between process using a  configuration file saying for what
 
 This is still on development and the readme will be improved soon
 
-this is the documentation for the protocol, there is not need of undertan that for use library
+this is the documentation for the protocol, there is not need of understand that for use library
+
  	{
 		action: 'request' //see posible action values,
 		token: 'xx-yy-zz' //the authentication token
@@ -28,7 +30,7 @@ this is the documentation for the protocol, there is not need of undertan that f
 		consume: {} //the list of consumes
 	}	
 
-##Posible values for action are:
+####Posible values for action are:
 
  - Register: As a provider request a registration 
  - Consume: As consumer, request the object to consume
