@@ -3,7 +3,7 @@
   "version": "1.1.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "NODE_ENV=test ./node_modules/mocha/bin/mocha -R spec ./test/*"
   },
   "author": "Stalin Bonilla",
   "dependencies": {
@@ -12,5 +12,9 @@
     "redis": "^0.12.1",
     "starvox": "git+ssh://git@gitlab.com/starvox/config.git",
     "uuid": "~2.0.1"
+  },
+  "devDependencies": {
+    "mocha": "^2.5.3",
+    "should": "^9.0.2"
   }
 }
