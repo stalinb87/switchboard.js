@@ -1,25 +1,43 @@
-{
-	action: 'request' //ver posibles valores de action,
-	token: 'xx-yy-zz' //el authentication token de este worker
-	from: 'com.namepasce.worker' // desde donde veine el namepasce,
-	to: 'com.namepasce.provider' //hacia donde va el mensaje,
-	uid: //valor unique identifica este mensaje,
-	error: { //objecto de error en caso de que pase
-		code:000,
-		message:''
-	},
-	methods: { //si se llama un metodo de parte del worker hacia el provider este debe de ser el objeto a enviar
-		name: '' //el nombre del metodo a llamar,
-		params:{a:2,b:2} //parametros a llamar
-	},
-	data: {}//datos de respuesta de parte del proveedor cuando se llame un metodo,
-	consume: {} //en caso de que se quiera consumir algo
-}
-//Posible valores de action
-Register -> Para solicitud de registro de parte del provider
-Consume -> Para solicitude del objecto de consumo de parte del consumer
-Validate -> Para solicitar validar un token al server
-Response -> para dar respuestas desde el server y desde el provider
-Provide -> para responder el objecto de consumo pedido al provider
-Request -> Para consumir metodos a un provider
-Event -> para manejar eventos
+switchboard.js
+
+An Inter Process Communication Protocol for node. 
+
+Allow to communicate between process using a  configuration file saying for what things need permission.
+
+This is still on development and the readme will be improved soon
+
+this is the documentation for the protocol, there is not need of undertan that for use library
+ 	{
+		action: 'request' //see posible action values,
+		token: 'xx-yy-zz' //the authentication token
+		from: 'com.namepasce.worker' // from where the message come
+		to: 'com.namepasce.provider' //where the message go,
+		uid: //unique id to identify the message,
+		//for error handler
+		error: { 
+			code:000,
+			message:''
+		},
+		//si se llama un metodo de parte del worker hacia el provider este debe de ser el objeto a enviar
+		// the method to request
+		methods: { 
+			name: '' //method name,
+			params:{a:2,b:2} //parameters to call
+		},
+		data: {}//data send from the provider when a method is called
+		consume: {} //the list of consumes
+	}	
+
+##Posible values for action are:
+
+ - Register: As a provider request a registration 
+ - Consume: As consumer, request the object to consume
+ - Validate: to request a token validation
+ - Response: for response to any message send
+ - Provide: for response to the consumer when request methods
+ - Request: for consume methods to a provider
+ - Event: for sending events data
+
+
+
+ For more detail please see the example folder, this documentation will be improve soon.
